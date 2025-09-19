@@ -5,9 +5,15 @@
 #include <sys/mman.h>
 #include <string.h>
 
+typedef struct {
+    int flag;
+    char* msg;
+} arr;
+
 int main() {
-    char* ptr = mmap(NULL,4096,PROT_WRITE | PROT_READ,MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    if (ptr == MAP_FAILED) {
+    arr obj;
+    obj.msg = mmap(NULL,4096,PROT_WRITE | PROT_READ,MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (obj.msg == MAP_FAILED) {
         perror("mmap");
         return -1;
     }
@@ -17,15 +23,19 @@ int main() {
         return -1;
     }
     else if (pid == 0) {
-        printf("Child - %s\n", ptr);
-        munmap(ptr, 4096);
+        while (!obj.flag) {
+            sleep(1000);
+        }
+        printf("Child - %s\n", obj.msg);
+        munmap(obj.msg, 4096);
         return 0;
     }
     else {
         const char *str = "Hello from Parent";
-        memcpy(ptr, str, 4096);
+        memcpy(obj.msg, str, 4096);
+        obj.flag = 1;
         wait(NULL);
         printf("Parent Process\n");
-        munmap(ptr, 4096);
+        munmap(obj.msg, 4096);
     } 
 }

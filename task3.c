@@ -5,10 +5,16 @@
 #include <sys/mman.h>
 #include <string.h>
 
+typedef struct {
+    int flag;
+    int* ptr;
+} arr;
+
 int main() {
-    int* ptr = mmap(NULL,4096,PROT_WRITE | PROT_READ,MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    arr obj;
+    obj.ptr = mmap(NULL,4096,PROT_WRITE | PROT_READ,MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     const int size = 12;
-    if (ptr == MAP_FAILED) {
+    if (obj.ptr == MAP_FAILED) {
         perror("mmap");
         return -1;
     }
@@ -18,18 +24,22 @@ int main() {
         return -1;
     }
     else if (pid == 0) {
+        while (!obj.flag) {
+            sleep(1000);
+        }
         for (int i = 0; i < size; ++i) {
-            printf("%d ", ptr[i]);
+            printf("%d ", obj.ptr[i]);
         }
         printf("\n");
-        munmap(ptr, 4096);
+        munmap(obj.ptr, 4096);
         return 0;
     }
     else {
         int arr[size] = {1,2,3,4,5,6,7,8,9,10,11,12};
-        memcpy(ptr, arr, 4096);
+        memcpy(obj.ptr, arr, 4096);
+        obj.flag = 1;
         wait(NULL);
         printf("Parent Process\n");
-        munmap(ptr, 4096);
+        munmap(obj.ptr, 4096);
     } 
 }
